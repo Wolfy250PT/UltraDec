@@ -39,14 +39,13 @@ flex-wrap:wrap;
 }
 
 .logo img{
-width:60px;
-height:60px;
-object-fit:contain;
+width:70px;
+height:70px;
 }
 
 .logo h1{
+font-size:3rem;
 color:#facc15;
-font-size:2.7rem;
 cursor:pointer;
 }
 
@@ -56,9 +55,9 @@ padding:20px;
 
 .filters{
 display:flex;
+justify-content:center;
 gap:10px;
 flex-wrap:wrap;
-justify-content:center;
 margin-bottom:25px;
 }
 
@@ -66,9 +65,9 @@ input,select{
 padding:12px;
 border:none;
 border-radius:12px;
-font-size:1rem;
 background:#1e293b;
 color:white;
+font-size:1rem;
 }
 
 .grid{
@@ -97,8 +96,8 @@ object-fit:contain;
 }
 
 .big-img{
-width:300px;
-height:300px;
+width:280px;
+height:280px;
 object-fit:contain;
 display:block;
 margin:auto;
@@ -109,9 +108,23 @@ display:inline-block;
 padding:6px 12px;
 border-radius:20px;
 margin:4px;
-font-size:0.9rem;
 font-weight:bold;
 color:white;
+}
+
+.details{
+background:#1e293b;
+padding:25px;
+border-radius:20px;
+max-width:900px;
+margin:auto;
+}
+
+.info-box{
+background:#334155;
+padding:15px;
+border-radius:15px;
+margin-bottom:15px;
 }
 
 button{
@@ -124,40 +137,24 @@ font-weight:bold;
 cursor:pointer;
 }
 
-.details{
-background:#1e293b;
-padding:25px;
-border-radius:20px;
-}
-
-.info-box{
-background:#334155;
-padding:15px;
-border-radius:15px;
-margin-bottom:15px;
+.loading{
+text-align:center;
+font-size:1.5rem;
+margin-top:50px;
 }
 
 .watermark{
 position:fixed;
 bottom:15px;
 right:15px;
-font-size:14px;
-font-weight:bold;
-color:white;
-opacity:0.15;
-pointer-events:none;
-user-select:none;
+opacity:0.2;
+font-size:13px;
 }
 
-@media (max-width:768px){
-
-.logo{
-flex-direction:column;
-}
+@media(max-width:768px){
 
 .logo h1{
 font-size:2rem;
-text-align:center;
 }
 
 .filters{
@@ -165,8 +162,7 @@ flex-direction:column;
 align-items:center;
 }
 
-input,
-select{
+input,select{
 width:100%;
 max-width:350px;
 }
@@ -200,7 +196,7 @@ height:220px;
 <main id="app"></main>
 
 <div class="watermark">
-Criado por Gabriel Neves
+Ultradex
 </div>
 
 <script>
@@ -224,6 +220,18 @@ dragon:'#7038F8',
 dark:'#705848',
 steel:'#B8B8D0',
 fairy:'#EE99AC'
+};
+
+const regions={
+kanto:[1,151],
+johto:[152,251],
+hoenn:[252,386],
+sinnoh:[387,493],
+unova:[494,649],
+kalos:[650,721],
+alola:[722,809],
+galar:[810,905],
+paldea:[906,1025]
 };
 
 let allPokemon=[];
@@ -257,39 +265,13 @@ oninput="filterPokemon()">
 <option value="kalos">Kalos</option>
 <option value="alola">Alola</option>
 <option value="galar">Galar</option>
-<option value="hisui">Hisui</option>
 <option value="paldea">Paldea</option>
 
 </select>
 
-<select id="type1Filter" onchange="filterPokemon()">
+<select id="typeFilter" onchange="filterPokemon()">
 
-<option value="">Tipo 1</option>
-
-<option value="normal">Normal</option>
-<option value="fire">Fire</option>
-<option value="water">Water</option>
-<option value="grass">Grass</option>
-<option value="electric">Electric</option>
-<option value="ice">Ice</option>
-<option value="fighting">Fighting</option>
-<option value="poison">Poison</option>
-<option value="ground">Ground</option>
-<option value="flying">Flying</option>
-<option value="psychic">Psychic</option>
-<option value="bug">Bug</option>
-<option value="rock">Rock</option>
-<option value="ghost">Ghost</option>
-<option value="dragon">Dragon</option>
-<option value="dark">Dark</option>
-<option value="steel">Steel</option>
-<option value="fairy">Fairy</option>
-
-</select>
-
-<select id="type2Filter" onchange="filterPokemon()">
-
-<option value="">Qualquer Tipo 2</option>
+<option value="">Todos Tipos</option>
 
 <option value="normal">Normal</option>
 <option value="fire">Fire</option>
@@ -318,15 +300,17 @@ oninput="filterPokemon()">
 
 `;
 
-await loadPokemonData();
+await loadPokemon();
 
 renderPokemon(allPokemon);
 
 }
 
-async function loadPokemonData(){
+async function loadPokemon(){
 
-allPokemon=[];
+const grid=document.getElementById('pokemonGrid');
+
+grid.innerHTML='<div class="loading">A carregar Pokédex...</div>';
 
 const response=await fetch(
 'https://pokeapi.co/api/v2/pokemon?limit=1025'
@@ -334,57 +318,44 @@ const response=await fetch(
 
 const data=await response.json();
 
-for(let i=0;i<data.results.length;i++){
+allPokemon=data.results.map((pokemon,index)=>{
 
-const pokemon=data.results[i];
-
-const id=i+1;
-
-const pokeResponse=await fetch(
-`https://pokeapi.co/api/v2/pokemon/${id}`
-);
-
-const pokeData=await pokeResponse.json();
-
-const types=pokeData.types.map(t=>t.type.name);
+const id=index+1;
 
 let region='paldea';
 
-if(id<=151) region='kanto';
-else if(id<=251) region='johto';
-else if(id<=386) region='hoenn';
-else if(id<=493) region='sinnoh';
-else if(id<=649) region='unova';
-else if(id<=721) region='kalos';
-else if(id<=809) region='alola';
-else if(id<=905) region='galar';
-else region='paldea';
+for(const reg in regions){
 
-if(pokeData.name.includes('hisui')){
-region='hisui';
+const [start,end]=regions[reg];
+
+if(id>=start && id<=end){
+region=reg;
+break;
 }
 
-if(pokeData.name.includes('alola')){
-region='alola';
 }
 
-if(pokeData.name.includes('galar')){
-region='galar';
-}
-
-if(pokeData.name.includes('paldea')){
-region='paldea';
-}
-
-allPokemon.push({
-id:pokeData.id,
-name:pokeData.name,
-types:types,
+return{
+id:id,
+name:pokemon.name,
 region:region,
-image:pokeData.sprites.other['official-artwork'].front_default
+image:`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`,
+url:pokemon.url
+};
+
 });
 
-}
+const promises=allPokemon.map(async pokemon=>{
+
+const response=await fetch(pokemon.url);
+
+const data=await response.json();
+
+pokemon.types=data.types.map(t=>t.type.name);
+
+});
+
+await Promise.all(promises);
 
 }
 
@@ -396,35 +367,27 @@ grid.innerHTML='';
 
 list.forEach(pokemon=>{
 
-const displayName=pokemon.name
-.replaceAll('-', ' ')
-.replace('hisui','Hisui')
-.replace('galar','Galar')
-.replace('alola','Alola')
-.replace('paldea','Paldea');
-
 grid.innerHTML+=`
 
 <div class="card"
-
 onclick="openPokemon('${pokemon.name}')">
 
-<img class="pokemon-img"
+<img
+class="pokemon-img"
+loading="lazy"
 src="${pokemon.image}">
 
 <h2>
-
 #${pokemon.id}
-
-${displayName}
-
+${pokemon.name.replaceAll('-', ' ')}
 </h2>
 
 <div>
 
 ${pokemon.types.map(type=>`
 
-<span class="type"
+<span
+class="type"
 style="background:${typeColors[type]}">
 
 ${type}
@@ -450,50 +413,31 @@ const search=document
 .value
 .toLowerCase();
 
-const type1=document
-.getElementById('type1Filter')
-.value;
-
-const type2=document
-.getElementById('type2Filter')
-.value;
-
 const region=document
 .getElementById('regionFilter')
 .value;
 
-let filtered=allPokemon.filter(pokemon=>{
+const type=document
+.getElementById('typeFilter')
+.value;
+
+const filtered=allPokemon.filter(pokemon=>{
 
 const matchSearch=
-pokemon.name.includes(search);
+pokemon.name.includes(search) ||
+pokemon.id.toString().includes(search);
 
 const matchRegion=
 !region || pokemon.region===region;
 
-let matchTypes=true;
-
-if(type1 && !type2){
-
-matchTypes=
-pokemon.types.includes(type1);
-
-}
-
-if(type1 && type2){
-
-matchTypes=
-pokemon.types.includes(type1) &&
-pokemon.types.includes(type2);
-
-}
+const matchType=
+!type || pokemon.types.includes(type);
 
 return matchSearch &&
 matchRegion &&
-matchTypes;
+matchType;
 
 });
-
-filtered.sort((a,b)=>a.id-b.id);
 
 renderPokemon(filtered);
 
@@ -503,7 +447,7 @@ async function openPokemon(name){
 
 const app=document.getElementById('app');
 
-app.innerHTML='<h2>A carregar...</h2>';
+app.innerHTML='<div class="loading">A carregar Pokémon...</div>';
 
 const response=await fetch(
 `https://pokeapi.co/api/v2/pokemon/${name}`
@@ -519,108 +463,6 @@ const desc=speciesData.flavor_text_entries.find(
 e=>e.language.name==='en'
 );
 
-const evoResponse=await fetch(
-speciesData.evolution_chain.url
-);
-
-const evoData=await evoResponse.json();
-
-const evolutions=[];
-
-function extractEvos(chain){
-
-let evoDetails='';
-
-if(chain.evolution_details.length){
-
-const details=chain.evolution_details[0];
-
-if(details.min_level){
-evoDetails=`Lvl ${details.min_level}`;
-}
-
-else if(details.item){
-evoDetails=`Use ${details.item.name}`;
-}
-
-else if(details.trigger){
-evoDetails=details.trigger.name;
-}
-
-}
-
-evolutions.push({
-name:chain.species.name,
-details:evoDetails || 'Base Form'
-});
-
-chain.evolves_to.forEach(e=>{
-extractEvos(e);
-});
-
-}
-
-extractEvos(evoData.chain);
-
-let weaknesses=[];
-let resistances=[];
-let immunities=[];
-
-const damageMap={};
-
-for(const typeData of data.types){
-
-const typeResponse=await fetch(typeData.type.url);
-
-const typeInfo=await typeResponse.json();
-
-typeInfo.damage_relations.double_damage_from.forEach(t=>{
-damageMap[t.name]=(damageMap[t.name] || 1)*2;
-});
-
-typeInfo.damage_relations.half_damage_from.forEach(t=>{
-damageMap[t.name]=(damageMap[t.name] || 1)*0.5;
-});
-
-typeInfo.damage_relations.no_damage_from.forEach(t=>{
-damageMap[t.name]=0;
-});
-
-}
-
-for(const type in damageMap){
-
-const multiplier=damageMap[type];
-
-if(multiplier===0){
-
-immunities.push({
-type:type,
-value:'0x'
-});
-
-}
-
-else if(multiplier>1){
-
-weaknesses.push({
-type:type,
-value:`${multiplier}x`
-});
-
-}
-
-else if(multiplier<1){
-
-resistances.push({
-type:type,
-value:`${multiplier}x`
-});
-
-}
-
-}
-
 app.innerHTML=`
 
 <button onclick="loadPokedex()">
@@ -631,11 +473,13 @@ app.innerHTML=`
 
 <div class="details">
 
-<img class="big-img"
+<img
+class="big-img"
 src="${data.sprites.other['official-artwork'].front_default}">
 
 <h1>
-#${data.id} ${data.name.toUpperCase()}
+#${data.id}
+${data.name.toUpperCase()}
 </h1>
 
 <br>
@@ -644,7 +488,8 @@ src="${data.sprites.other['official-artwork'].front_default}">
 
 ${data.types.map(t=>`
 
-<span class="type"
+<span
+class="type"
 style="background:${typeColors[t.type.name]}">
 
 ${t.type.name}
@@ -659,7 +504,7 @@ ${t.type.name}
 
 <div class="info-box">
 
-<h3>Descrição Pokédex</h3>
+<h3>Descrição</h3>
 
 <br>
 
@@ -671,18 +516,15 @@ ${desc?.flavor_text.replace(/\f/g,' ') || 'Sem descrição.'}
 
 <div class="info-box">
 
-<h3>Evoluções</h3>
+<h3>Status Base</h3>
 
 <br>
 
-${evolutions.map(e=>`
+${data.stats.map(stat=>`
 
 <p>
-
-<b>${e.name}</b>
-
-- ${e.details}
-
+<b>${stat.stat.name}:</b>
+${stat.base_stat}
 </p>
 
 `).join('')}
@@ -691,58 +533,13 @@ ${evolutions.map(e=>`
 
 <div class="info-box">
 
-<h3>Fraquezas</h3>
+<h3>Altura e Peso</h3>
 
 <br>
 
-${weaknesses.map(w=>`
+<p><b>Altura:</b> ${data.height/10}m</p>
 
-<span class="type"
-style="background:${typeColors[w.type]}">
-
-${w.type} (${w.value})
-
-</span>
-
-`).join('')}
-
-</div>
-
-<div class="info-box">
-
-<h3>Resistências</h3>
-
-<br>
-
-${resistances.map(r=>`
-
-<span class="type"
-style="background:${typeColors[r.type]}">
-
-${r.type} (${r.value})
-
-</span>
-
-`).join('')}
-
-</div>
-
-<div class="info-box">
-
-<h3>Imunidades</h3>
-
-<br>
-
-${immunities.map(i=>`
-
-<span class="type"
-style="background:${typeColors[i.type]}">
-
-${i.type} (${i.value})
-
-</span>
-
-`).join('')}
+<p><b>Peso:</b> ${data.weight/10}kg</p>
 
 </div>
 
